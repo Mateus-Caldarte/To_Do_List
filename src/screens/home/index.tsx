@@ -11,9 +11,12 @@ import { ListItem } from "../../components/ListItem";
 import { Container, ContainerAddInputAndButton, Divider } from "./styled";
 
 const TASKS_STORAGE_KEY = "@tasks_storage_key";
+const COMPLETED_TASKS_STORAGE_KEY = "@completed_tasks_storage_key";
 
 export const Home = () => {
-  const [listTask, setListTask] = useState<string[]>([]);
+  const [listTask, setListTask] = useState<
+    { text: string; completed: boolean }[]
+  >([]);
   const [completedTasks, setCompletedTasks] = useState<number>(0);
   const [newTask, setNewTask] = useState<string>("");
 
@@ -24,6 +27,10 @@ export const Home = () => {
   useEffect(() => {
     saveTasks();
   }, [listTask]);
+
+  useEffect(() => {
+    saveCompletedTasks();
+  }, [completedTasks]);
 
   const saveTasks = async () => {
     try {
@@ -37,30 +44,64 @@ export const Home = () => {
     try {
       const storedTasks = await AsyncStorage.getItem(TASKS_STORAGE_KEY);
       if (storedTasks) {
-        setListTask(JSON.parse(storedTasks));
+        const parsedTasks = JSON.parse(storedTasks);
+        setListTask(parsedTasks);
+        setCompletedTasks(
+          parsedTasks.filter((task: any) => task.completed).length
+        );
       }
     } catch (error) {
       console.error("Falha ao carregar os dados", error);
     }
   };
 
+  const saveCompletedTasks = async () => {
+    try {
+      await AsyncStorage.setItem(
+        COMPLETED_TASKS_STORAGE_KEY,
+        JSON.stringify(completedTasks)
+      );
+    } catch (error) {
+      console.error("Falha ao salvar os dados de tarefas completadas", error);
+    }
+  };
+
   const handleAddTask = () => {
     if (newTask.trim()) {
-      setListTask((prevTasks) => [...prevTasks, newTask]);
+      setListTask((prevTasks) => [
+        ...prevTasks,
+        { text: newTask, completed: false },
+      ]);
       setNewTask("");
     }
   };
 
-  const handleToggleCompleted = (completed: boolean) => {
+  const handleToggleCompleted = (taskToToggle: {
+    text: string;
+    completed: boolean;
+  }) => {
+    setListTask((prevTasks) =>
+      prevTasks.map((task) =>
+        task.text === taskToToggle.text
+          ? { ...task, completed: !task.completed }
+          : task
+      )
+    );
     setCompletedTasks((prevCompletedTasks) =>
-      completed ? prevCompletedTasks + 1 : prevCompletedTasks - 1
+      taskToToggle.completed ? prevCompletedTasks - 1 : prevCompletedTasks + 1
     );
   };
 
-  const handleDeleteTask = (taskToDelete: string) => {
+  const handleDeleteTask = (taskToDelete: {
+    text: string;
+    completed: boolean;
+  }) => {
     setListTask((prevTasks) =>
-      prevTasks.filter((task) => task !== taskToDelete)
+      prevTasks.filter((task) => task.text !== taskToDelete.text)
     );
+    if (taskToDelete.completed) {
+      setCompletedTasks((prevCompletedTasks) => prevCompletedTasks - 1);
+    }
   };
 
   return (
@@ -86,12 +127,13 @@ export const Home = () => {
           data={listTask}
           renderItem={({ item }) => (
             <ListItem
-              text={item}
+              text={item.text}
+              completed={item.completed}
               onDelete={() => handleDeleteTask(item)}
-              onToggleCompleted={handleToggleCompleted}
+              onToggleCompleted={() => handleToggleCompleted(item)}
             />
           )}
-          keyExtractor={(item) => item}
+          keyExtractor={(item) => item.text}
           ListEmptyComponent={() => <ListEmpty />}
         />
       </Container>

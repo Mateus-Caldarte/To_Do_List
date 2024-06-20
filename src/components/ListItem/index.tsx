@@ -15,6 +15,7 @@ type ListItemProps = TouchableOpacityProps & {
   text: string;
   onDelete: () => void;
   onToggleCompleted: (completed: boolean) => void;
+  completed?: boolean;
 };
 
 export const ListItem: React.FC<ListItemProps> = ({
