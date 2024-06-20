@@ -14,13 +14,19 @@ type ListItemProps = TouchableOpacityProps & {
   icon?: keyof typeof MaterialIcons.glyphMap;
   text: string;
   onDelete: () => void;
+  onToggleCompleted: (completed: boolean) => void;
 };
 
-export const ListItem: React.FC<ListItemProps> = ({ text, onDelete }) => {
+export const ListItem: React.FC<ListItemProps> = ({
+  text,
+  onDelete,
+  onToggleCompleted,
+}) => {
   const [completed, setCompleted] = useState(false);
 
   const handleToggleCompleted = () => {
     setCompleted(!completed);
+    onToggleCompleted(!completed);
   };
 
   return (

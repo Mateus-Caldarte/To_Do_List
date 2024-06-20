@@ -1,9 +1,9 @@
 import React from "react";
-import { Container } from "./styles";
 import { TextInputProps } from "react-native";
+import { Container } from "./styles";
 
 type Props = TextInputProps;
 
 export const Input = (props: Props) => {
-  return <Container {...props} />;
+  return <Container {...props} autoCorrect={false} autoCapitalize="none" />;
 };
